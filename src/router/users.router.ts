@@ -1,10 +1,11 @@
-import { UsersController } from "../controllers/users.controller.js";
+import { UsersController } from '../controllers/users.controller.js';
 import createDebug from 'debug';
 import { Router as createRouter } from 'express';
-import { UsersMongoRepo } from "../repos/users/users.mongo.repo.js";
-import { AuthInterceptor } from "../middleware/auth.interceptor.js";
+import { UsersMongoRepo } from '../repos/users/users.mongo.repo.js';
+import { AuthInterceptor } from '../middleware/auth.interceptor.js';
+import { FileInterceptor } from '../middleware/file.interceptor.js';
 
-const debug = createDebug('W7E:users:router');
+const debug = createDebug('W8E:users:router');
 
 export const usersRouter = createRouter();
 debug('Starting');
@@ -12,12 +13,22 @@ debug('Starting');
 const repo = new UsersMongoRepo();
 const controller = new UsersController(repo);
 const interceptor = new AuthInterceptor();
+const fileInterceptor = new FileInterceptor();
 
-usersRouter.get('/', controller.getAll.bind(controller)); // Ver todos los usuarios
-usersRouter.post('/register', controller.create.bind(controller)); // Crear usuario
+usersRouter.get(
+  '/',
+  interceptor.authorization.bind(interceptor),
+  controller.getAll.bind(controller)
+); // Ver todos los usuarios
+
+usersRouter.post(
+  '/register',
+  fileInterceptor.singleFileStore('avatar').bind(fileInterceptor),
+  controller.create.bind(controller)
+); // Crear usuario
 usersRouter.post('/login', controller.login.bind(controller)); // Hacer log in
 usersRouter.patch(
-  '/add-friend/:id', 
+  '/add-friend/:id',
   interceptor.authorization.bind(interceptor),
   controller.addFriend.bind(controller)
 );
@@ -28,23 +39,24 @@ usersRouter.patch(
   controller.addEnemy.bind(controller)
 );
 
-// A usersRouter.patch( // Token JWT
-//   '/login',
-//   interceptor.authorization.bind(interceptor),
-//   controller.login.bind(controller)
-// );
+usersRouter.patch( // Token JWT
+  '/login',
+  interceptor.authorization.bind(interceptor),
+  controller.login.bind(controller)
+);
+
 usersRouter.patch(
   '/:id',
   interceptor.authorization.bind(interceptor),
   interceptor.authentication.bind(interceptor),
+
   controller.update.bind(controller)
 );
 
-
 usersRouter.delete(
   '/:id',
-  interceptor.authorization.bind(interceptor),
-  interceptor.authentication.bind(interceptor),
+  // Add ADMIN interceptor.authorization.bind(interceptor),
+  // interceptor.authentication.bind(interceptor),
   controller.delete.bind(controller)
 );
 

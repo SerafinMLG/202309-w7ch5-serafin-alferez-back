@@ -16,6 +16,12 @@ const usersSchema = new Schema<User>({
   },
   surname: String,
   age: Number,
+  avatar: {
+    publicId: String,
+    size: Number,
+    format: String,
+    url: String,
+  },
   friends: [
     {
       type: Schema.Types.ObjectId,
