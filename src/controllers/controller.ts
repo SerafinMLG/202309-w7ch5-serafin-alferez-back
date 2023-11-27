@@ -3,7 +3,6 @@
 import { Repository } from '../repos/repo.js';
 import { NextFunction, Request, Response } from 'express';
 
-
 export abstract class Controller<T extends { id: unknown }> {
   // eslint-disable-next-line no-unused-vars
   constructor(protected repo: Repository<T>) {}
@@ -26,9 +25,14 @@ export abstract class Controller<T extends { id: unknown }> {
     }
   }
 
-
   async create(req: Request, res: Response, next: NextFunction) {
     try {
+      req.body.avatar = {
+        publicId: req.file?.filename,
+        format: req.file?.mimetype,
+        url: req.file?.path,
+        size: req.file?.size,
+      };
       const result = await this.repo.create(req.body);
       res.status(201);
       res.statusMessage = 'Created';
@@ -49,27 +53,8 @@ export abstract class Controller<T extends { id: unknown }> {
 
   async addFriend(req: Request, res: Response, next: NextFunction) {
     try {
+      const result = await this.repo.addFriend(req.params.id, req.body.userId);
 
-      const result = await this.repo.addFriend(req.params.id, req.body);
-     
-      res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async removeEnemy(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await this.repo.removeEnemy(req.params.id, req.body.enemyIdToRemove);
-      res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async removeFriend(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await this.repo.removeFriend(req.params.id, req.body.friendIdToRemove);
       res.json(result);
     } catch (error) {
       next(error);
@@ -78,7 +63,31 @@ export abstract class Controller<T extends { id: unknown }> {
 
   async addEnemy(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await this.repo.addEnemy(req.params.id, req.body);
+      const result = await this.repo.addEnemy(req.params.id, req.body.userId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeEnemy(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await this.repo.removeEnemy(
+        req.params.id,
+        req.body.userId
+      );
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeFriend(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await this.repo.removeFriend(
+        req.params.id,
+        req.body.userId
+      );
       res.json(result);
     } catch (error) {
       next(error);
